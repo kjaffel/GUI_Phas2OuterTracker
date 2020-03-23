@@ -43,25 +43,6 @@ RED = (255, 0, 0)
 MAGENTA = (255, 0, 255)
 WHITE = (255, 255, 255)
 
-def getProcessOutput(cmd):
-    process = subprocess.Popen(
-        cmd,
-        shell=True,
-        stdout=subprocess.PIPE)
-    process.wait()
-    data, err = process.communicate()
-    if process.returncode is 0:
-        return data.decode('utf-8')
-    else:
-        print("Error:", err)
-    return ""
-
-#data = json.loads(getProcessOutput("python DataEvenAssemblyPS2SModule.py"))
-#data = json.loads(sys.argv[1])
-
-
-pg.setConfigOptions(imageAxisOrder='row-major')
-
 class CustomiseDeeItems(pg.GraphicsObject):
     def __init__(self, data):
         pg.GraphicsObject.__init__(self)
@@ -82,7 +63,7 @@ class CustomiseDeeItems(pg.GraphicsObject):
 #            pen.setWidth(width)
 #            qPainter.setPen(pen)
 #            qPainter.drawLine(x1, y1, x2, y2)
-#
+        
         def SSModule(self, opt, pwr, p):
             print (opt, pwr)
             # lengths
@@ -92,11 +73,10 @@ class CustomiseDeeItems(pg.GraphicsObject):
             sssensory = 94.2
             epsilon = sssensorx * 0.1
 
-
             w1, h1, w2, h2 = [sssensorx, sssensory, framessx, framessy]
 
             p.rotate(-90)  # rotate to put empty part to the left
-            # Exterior square
+            # frame |_| frame1+frame3+frame2
             p.setBrush(pg.mkBrush(GetPowerColor(pwr)))
             p.setPen(0)
 
@@ -106,32 +86,32 @@ class CustomiseDeeItems(pg.GraphicsObject):
             p.translate(xoff, yoff)  # translate from center to low-x, low-y position.
             w = (w2 - w1) * 0.5
             h = h2
-            rectangle = QtCore.QRectF(0, 0, w + epsilon, h)
-            p.drawRect(rectangle)
+            frame1 = QtCore.QRectF(0, 0, w + epsilon, h)
+            p.drawRect(frame1)
 
             p.translate(w + w1 - epsilon, 0)
             w = (w2 - w1) * 0.5
             h = h2
-            rectangle = QtCore.QRectF(0, 0, w + epsilon, h)
-            p.drawRect(rectangle)
+            frame2 = QtCore.QRectF(0, 0, w + epsilon, h)
+            p.drawRect(frame2)
 
             p.translate(- w - w1 + epsilon, (h2 - h1) * 0.5 + h1)
             w = w2
             h = (h2 - h1) * 0.5
-            rectangle = QtCore.QRectF(0, 0, w, h)
-            p.drawRect(rectangle)
+            frame3 = QtCore.QRectF(0, 0, w, h)
+            p.drawRect(frame3)
             p.translate(0, -epsilon)
-            p.drawRect(rectangle)
+            #p.drawRect(rectangle)
             p.translate(0, epsilon)
 
-            # Interior square
+            # sensor
             p.setBrush(pg.mkBrush('#778899'))
             p.setPen(pg.mkPen(GetOpticalColor(opt)))
 
             p.translate((w2 - w1) * 0.5, - h1)
 
-            rectangle = QtCore.QRectF(0, 0, w1, h1)
-            p.drawRect(rectangle)
+            sensor = QtCore.QRectF(0, 0, w1, h1)
+            p.drawRect(sensor)
 
             p.translate(w1 * 0.5, h1 * 0.5)  # go back to center position
             p.rotate(90)  # rotate to put empty part to the left
@@ -144,29 +124,28 @@ class CustomiseDeeItems(pg.GraphicsObject):
             framepsx = 130
             framepsy = 69.6
 
-            # Exterior square
+            # frame
             p.setBrush(pg.mkBrush(GetPowerColor(pwr)))
             p.setPen(pg.mkPen('k'))
 
             w1 =  framepsx
             h1 =  framepsy
             p.translate(- w1 / 2, - h1 / 2)  # translate from center to low-x, low-y position.
-            rectangle = QtCore.QRectF(0, 0, w1, h1)
-            p.drawRoundedRect(rectangle, 5, 5)
+            frame = QtCore.QRectF(0, 0, w1, h1)
+            p.drawRoundedRect(frame, 5, 5)
             p.translate(w1 / 2, h1 / 2)  # go back to center positio
 
-            # Interior square
+            # sensor
             p.setBrush(pg.mkBrush('#778899'))
             p.setPen(pg.mkPen(GetOpticalColor(opt)))
 
             w2 = pssensorx
             h2 = pssensory
             p.translate(-w2 / 2, -h2 / 2)
-            rectangle = QtCore.QRectF(0, 0, w2, h2)
-            p.drawRoundedRect(rectangle, 5, 5)
+            sensor = QtCore.QRectF(0, 0, w2, h2)
+            p.drawRoundedRect(sensor, 5, 5)
             p.translate(w2 / 2, h2 / 2)  # go back to center positio
 
-            # Inter-Internal
             p.setPen(pg.mkPen('k'))
             w = w2 * 0.8
             h = h2 * 0.5
