@@ -27,13 +27,22 @@ from PyQt5.QtCore import Qt
 from utils import GetOpticalColor, GetPowerColor
 
 sys.path.append("/home/jaffel/Phas2OuterTracker/GUI_Phase2OuterTracker")
-
+from DataOddAssemblyPS2SModule import OddAssemblyPS2SModule as data
 """
 ## Create a subclass of GraphicsObject.
 ## The only required methods are paint() and boundingRect() 
 ## (see the link to QGraphicsItem documentation above !)
 
 """
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+CYAN = (0, 255, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+MAGENTA = (255, 0, 255)
+WHITE = (255, 255, 255)
+
 def getProcessOutput(cmd):
     process = subprocess.Popen(
         cmd,
@@ -51,99 +60,121 @@ def getProcessOutput(cmd):
 #data = json.loads(sys.argv[1])
 
 
-def drawLine(qPainter, color, x1, y1, x2, y2, width=0):
-    pen = QtGui.QPen(QtGui.QColor(*color))
- 
-    pen.setWidth(width)
-    qPainter.setPen(pen)
-    qPainter.drawLine(x1, y1, x2, y2)
-
+pg.setConfigOptions(imageAxisOrder='row-major')
 
 class CustomiseDeeItems(pg.GraphicsObject):
     def __init__(self, data):
         pg.GraphicsObject.__init__(self)
+        Win = pg.GraphicsWindow(size=(1000,800), border=True)
+        #Win.resize(1000,1000, border=True)
+        Win.setWindowTitle("TEDD1 Plotter")
+        View = Win.addViewBox(col=0, row=0, lockAspect=True)
+        View.disableAutoRange('xy')
+        View.autoRange()
         self.data = data  
         self.generatePicture()
+        pg.setConfigOptions(antialias=True)
 
     def generatePicture(self):
+#        def drawLine(qPainter, color, x1, y1, x2, y2, width=0):
+#            pen = QtGui.QPen(QtGui.QColor(*color))
+#    
+#            pen.setWidth(width)
+#            qPainter.setPen(pen)
+#            qPainter.drawLine(x1, y1, x2, y2)
+#
         def SSModule(self, opt, pwr, p):
-            # lengths 
-            framessx=144.1
-            framessy=125
-            crossx =41.4
-            crossy =30.8
+            print (opt, pwr)
+            # lengths
+            framessx = 144.1
+            framessy = 125
             sssensorx = 102.7
             sssensory = 94.2
-            epsilon = sssensorx* 0.1
-            w = crossx * 0.5
-
-            BLACK = (0, 0, 0)
-            BLUE = (0, 0, 255)
-            CYAN = (0, 255, 255)
-            GREEN = (0, 255, 0)
-            YELLOW = (255, 255, 0)
-            RED = (255, 0, 0)
-            MAGENTA = (255, 0, 255)
-            WHITE = (255, 255, 255)
+            epsilon = sssensorx * 0.1
 
 
+            w1, h1, w2, h2 = [sssensorx, sssensory, framessx, framessy]
 
-            print (opt, pwr)
-            
-            # frame |_|  
+            p.rotate(-90)  # rotate to put empty part to the left
+            # Exterior square
             p.setBrush(pg.mkBrush(GetPowerColor(pwr)))
             p.setPen(0)
-            frame1 = QtCore.QRectF(0., 0., w + epsilon, framessy)
-            p.drawRect(frame1)
-            p.translate(w + sssensorx - epsilon, 0.)
 
-            frame2 = QtCore.QRectF(0., 0., w + epsilon, framessy)
-            p.drawRect(frame2)
-            p.translate(- w - sssensorx + epsilon, crossy * 0.5 + sssensory)
+            xoff = - w2 / 2
+            yoff = - h2 / 2
 
-            frame3 = QtCore.QRectF(0, 0, framessx, crossy*0.5)
-            p.drawRect(frame3)
+            p.translate(xoff, yoff)  # translate from center to low-x, low-y position.
+            w = (w2 - w1) * 0.5
+            h = h2
+            rectangle = QtCore.QRectF(0, 0, w + epsilon, h)
+            p.drawRect(rectangle)
 
-            # sensor
-            p.setBrush(pg.mkBrush(GetOpticalColor(opt)))
-            #p.setBrush(pg.mkBrush('g'))
-            p.setPen(pg.mkPen(0))
-            p.translate(crossx * 0.5, - sssensory)
-            sensor = QtCore.QRectF(0, 0, sssensorx, sssensory)
-            p.drawRect(sensor)
-            
-            # centre
-            #p.drawLine(QtCore.QPointF(t, min), QtCore.QPointF(t, max))
-            #drawLine(p, BLUE,    10, 10, 160, 20)
-        
+            p.translate(w + w1 - epsilon, 0)
+            w = (w2 - w1) * 0.5
+            h = h2
+            rectangle = QtCore.QRectF(0, 0, w + epsilon, h)
+            p.drawRect(rectangle)
+
+            p.translate(- w - w1 + epsilon, (h2 - h1) * 0.5 + h1)
+            w = w2
+            h = (h2 - h1) * 0.5
+            rectangle = QtCore.QRectF(0, 0, w, h)
+            p.drawRect(rectangle)
+            p.translate(0, -epsilon)
+            p.drawRect(rectangle)
+            p.translate(0, epsilon)
+
+            # Interior square
+            p.setBrush(pg.mkBrush('#778899'))
+            p.setPen(pg.mkPen(GetOpticalColor(opt)))
+
+            p.translate((w2 - w1) * 0.5, - h1)
+
+            rectangle = QtCore.QRectF(0, 0, w1, h1)
+            p.drawRect(rectangle)
+
+            p.translate(w1 * 0.5, h1 * 0.5)  # go back to center position
+            p.rotate(90)  # rotate to put empty part to the left
+
+
         def PSModule(self, opt, pwr, p):
             # lengths:
             pssensorx = 98.7 
             pssensory = 49.2 
             framepsx = 130
             framepsy = 69.6
-            # frame
-            p.setBrush(pg.mkBrush(0))
+
+            # Exterior square
+            p.setBrush(pg.mkBrush(GetPowerColor(pwr)))
             p.setPen(pg.mkPen('k'))
 
-            p.translate(- framepsx / 2, - framepsy / 2)
-            psframe = QtCore.QRectF(0, 0, framepsx, framepsy)
-            p.drawRoundedRect(psframe, 5, 5)
-            p.translate(framepsx / 2, framepsy / 2)
-              
-            # sensor 
-            p.setBrush(pg.mkBrush(1))
-            p.setPen(pg.mkPen('g'))
-            p.translate(-pssensorx / 2, -pssensory / 2)
-            pssensor = QtCore.QRectF(0, 0, pssensorx, pssensory)
-            p.drawRect(pssensor)
-            p.drawLine
-            p.translate(pssensorx / 2, pssensory / 2)
-            
+            w1 =  framepsx
+            h1 =  framepsy
+            p.translate(- w1 / 2, - h1 / 2)  # translate from center to low-x, low-y position.
+            rectangle = QtCore.QRectF(0, 0, w1, h1)
+            p.drawRoundedRect(rectangle, 5, 5)
+            p.translate(w1 / 2, h1 / 2)  # go back to center positio
+
+            # Interior square
+            p.setBrush(pg.mkBrush('#778899'))
+            p.setPen(pg.mkPen(GetOpticalColor(opt)))
+
+            w2 = pssensorx
+            h2 = pssensory
+            p.translate(-w2 / 2, -h2 / 2)
+            rectangle = QtCore.QRectF(0, 0, w2, h2)
+            p.drawRoundedRect(rectangle, 5, 5)
+            p.translate(w2 / 2, h2 / 2)  # go back to center positio
+
+            # Inter-Internal
             p.setPen(pg.mkPen('k'))
-            p.translate(-pssensorx*0.8 / 2, -pssensory*0.5 / 2)
-            pssensor = QtCore.QRectF(0., 0., pssensorx*0.8, pssensory*0.5)
-            p.drawRoundedRect(pssensor, 20., 20.)
+            w = w2 * 0.8
+            h = h2 * 0.5
+            p.translate(-w / 2, -h / 2)
+            rectangle = QtCore.QRectF(0, 0, w, h)
+            p.drawRoundedRect(rectangle, 20, 20)
+
+            p.translate(w / 2, h / 2)  # go back to center position
 
         
         def DEE(self, radius, p):
@@ -164,21 +195,19 @@ class CustomiseDeeItems(pg.GraphicsObject):
         #   mkPen(0.5)                                             ## solid grey line 1px wide
         #   mkPen(color=(200, 200, 255), style=QtCore.Qt.DotLine)  ## Dotted pale-blue line
         #module_footprint.setPen(pg.mkPen(0.5)) 
-        
-        val = None
-        for (id, ringnbr, radius, phi, opt, pwr, type, surface) in self.data:
-        
-            # Ring updates :
-            if ringnbr == val:
-                print ("{0} raw".format(val))
-            else:        
-                DEE(self, radius, p)
-            val = ringnbr
+
+        #rectangle = QtCore.QRectF(-800, 0, 800, 800)
+        #p.drawRoundedRect(rectangle, 0., 0.)
+
+        # rectangle = QtCore.QRectF(-2000, -200, 4000, 2000)
+        # p.drawRoundedRect(rectangle, 0., 0.)
+
+        for (id, ring, radius, phi, opt, pwr, type, surface) in self.data:
 
             # Angle:
-            angle =(phi if surface== 1 else 180-phi)
-            
-            # Transform to cartesian 
+            angle =(phi if surface== 1 else 180 - phi)
+
+            # Transform to cartesian
             x = radius * np.cos(np.radians(angle))
             y = radius * np.sin(np.radians(angle))
             rot = angle - 90
@@ -186,14 +215,16 @@ class CustomiseDeeItems(pg.GraphicsObject):
             print("{0}Module ID: {1}".format(type, id))
             print("Cartesian coordinate: x =", x, ',y =', y, "\nPolar coordinate: r =", radius,', phi =', phi,'°')
             print("*****************************")
-            #print(type(opt), type(pwr))
             p.translate(x, y)
+            print( "initial:", x, y)
             p.rotate(rot)
-            
+
             if type =="2S":
-                SSModule(self, opt, pwr, p)
+                if surface==1:
+                    SSModule(self, opt, pwr, p)
             elif type =="PS":
-                PSModule(self, opt, pwr, p)
+                if surface ==1:
+                    PSModule(self, opt, pwr, p)
             else:
                 raise RuntimeError ("{0} __ Unkown type of module !".format(type))
 
@@ -211,33 +242,10 @@ class CustomiseDeeItems(pg.GraphicsObject):
         ## (in this case, QPicture does all the work of computing the bouning rect for us)
         return QtCore.QRectF(self.picture.boundingRect())
 
-
-# for fast test !
-data = [
-        ## fields are :
-        #Module_Id, Module_RingL, Module_RingR, Module_phi_deg, OPT_Services_Channel, PWR_Services_Channel, type_/C, surface
-#(411571240,     1,      259.78, 171,    "7B",   "7A",   "PS",   2),
-(411571236,     1,      259.78, 153,    "6B",   "5C",   "PS",   1),
-#(411571232,     1,      259.78, 135,    "6B",   "5C",   "PS",   2),
-(411571228,     1,      259.78, 117,    "5B",   "4A",   "PS",   1),
-#(411571224,     1,      259.78, 99,     "5B",   "4A",   "PS",   2),
-(411571220,     1,      259.78, 81,     "5B",   "4A",   "PS",   1),
-#(411571216,     1,      259.78, 63,     "3B",   "3A",   "PS",   2),
-(411571212,     1,      259.78, 45,     "3B",   "3A",   "PS",   1),
-#(411571208,     1,      259.78, 27,     "2B",   "1C",   "PS",   2),
-(411571204,     1,      259.78, 9,      "2B",   "1C",   "PS",   1),
-#(411612264,	11,	689.39,	176.538462,     "6B",	"6A",	"2S",	2),
-(411612260,	11,	689.39,	169.615385,	"6B",	"6A",	"2S",	1),
-    ]
-
-
 # set axis limit 
 plt = pg.plot()
-# resizing the window
-#plt = pg.GraphicsWindow(title="TEDD1 Plotter")
-plt.resize(1000,600)
 #plt.setAspectLocked()
-
+plt.resize(1000,1000)
 #Add polar grid lines
 y = range(0, 1000)
 x = range(0, 1000)
