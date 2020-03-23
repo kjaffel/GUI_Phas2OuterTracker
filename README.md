@@ -12,8 +12,7 @@ Window to Navigate through Modules:
 pyuic5 -x ModuleNavigator/browsemodules.ui -o browsemodules.py
 
 Help Windows:
-# FIXME 
-# pass to https://cp3-git.irmp.ucl.ac.be/cp3-support/helpdesk/issues instead !
+FIXME : pass to https://cp3-git.irmp.ucl.ac.be/cp3-support/helpdesk/issues instead !
 pyuic5 -x Help/IssuesWin.ui -o IssuesWin.py
 pyuic5 -x Help/NewIssueOpenWin.ui -o NewIssueOpenWin.py
 actions.py will allow you to attach files and this script should be moved to GUIRun.py # FIXME
